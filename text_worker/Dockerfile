@@ -1,4 +1,4 @@
-FROM microsoft/runtime
+FROM microsoft/dotnet:runtime
 WORKDIR /app
 COPY . .
 ENTRYPOINT ["dotnet", "text_worker.dll"]

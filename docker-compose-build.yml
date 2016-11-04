@@ -1,6 +1,6 @@
 version: '2'
 services:
-  tradapp-build:
+  text-worker-build:
     image: microsoft/dotnet:latest
     volumes:
       - .:/sln
