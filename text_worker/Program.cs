@@ -22,11 +22,15 @@ namespace text_worker
 
                 while (true)
                 {
-                    string json = redis.ListLeftPopAsync("documents:inprocess:0").Result;
+                    string json = redis.ListLeftPopAsync("documents:process:1").Result;
                     if (json != null)
                     {
                         var document = JsonConvert.DeserializeAnonymousType(json, definition);
                         Console.WriteLine($"Processing document '{document.name}' uploaded by '{document.user}/{document.client}'");
+                    }
+                    else
+                    {
+                        Thread.Sleep(500);
                     }
                 }
             }
