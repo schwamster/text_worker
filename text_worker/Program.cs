@@ -28,7 +28,7 @@ namespace text_worker
             string queue = configuration["Queue"];
             try
             {
-                var redis = OpenRedisConnection("redis").GetDatabase();
+                var redis = OpenRedisConnection(configuration["RedisHost"]).GetDatabase();
 
                 var definition = new { name = "", size = 0, user = "", client = "", content = "" };
                 Console.WriteLine($"Starting to read from Queue: {queue}");
@@ -39,7 +39,7 @@ namespace text_worker
                     {
                         var document = JsonConvert.DeserializeAnonymousType(json, definition);
                         Console.WriteLine($"Processing document '{document.name}' uploaded by '{document.user}/{document.client}'");
-                        var result = ExtractText(document.name, document.content, configuration["OcrServiceHost"]);
+                        var result = ExtractText(document.name, document.content, configuration["OcrServiceHost"]).Result;
                         Console.WriteLine($"Result from ocr: {result}");
                     }
                     else
