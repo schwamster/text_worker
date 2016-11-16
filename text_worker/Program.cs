@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using System.Globalization;
 using System.IO;
+using Polly;
 
 namespace text_worker
 {
@@ -57,6 +58,16 @@ namespace text_worker
 
         private static async Task<string> ExtractText(string name, string content, string ocrServiceHost)
         {
+            var policy = Policy
+              .Handle<AggregateException>()
+              .WaitAndRetryForever(
+                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                (exception, timespan, context) =>
+                {
+                    Console.WriteLine($"Could not connect to OcrService at {ocrServiceHost} will retry forever => {exception}");       
+                });
+
+            //TODO: messages will be lost here
             //make call to ocr_service
             byte[] document = System.Convert.FromBase64String(content);
             using (var client = new HttpClient())
@@ -65,12 +76,26 @@ namespace text_worker
                 {
                     msg.Add(new StreamContent(new MemoryStream(document)), "files", name);
                     var url = $"http://{ocrServiceHost}/api/ocr";
-                    using (var message = await client.PostAsync(url, msg))
-                    {
-                        var input = await message.Content.ReadAsStringAsync();
-                        Console.WriteLine($"Document sent to {url}");
-                        return input;
-                    }
+                    Console.WriteLine($"OcrService Endpoint at: {url}");
+
+                    return await policy.Execute(async () =>
+                     {
+                         try
+                         {
+                             using (var message = await client.PostAsync(url, msg))
+                             {
+                                 var input = await message.Content.ReadAsStringAsync();
+                                 Console.WriteLine($"Document sent to {url}");
+                                 return input;
+                             }
+                         }
+                         catch (Exception ex)
+                         {
+                   
+                             Console.WriteLine(ex);
+                             return null;
+                         }
+                     });
                 }
             }
         }
@@ -80,6 +105,7 @@ namespace text_worker
         private static ConnectionMultiplexer OpenRedisConnection(string hostname)
         {
             // Use IP address to workaround hhttps://github.com/StackExchange/StackExchange.Redis/issues/410
+            Console.WriteLine($"Looking for redis at {hostname}");
             var ipAddress = GetIp(hostname);
             Console.WriteLine($"Found redis at {ipAddress}");
 

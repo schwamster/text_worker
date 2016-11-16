@@ -495,6 +495,24 @@
           "lib/netstandard1.0/Newtonsoft.Json.dll": {}
         }
       },
+      "Polly/4.3.0": {
+        "type": "package",
+        "dependencies": {
+          "System.Collections": "4.0.0",
+          "System.Diagnostics.Debug": "4.0.0",
+          "System.Linq": "4.0.0",
+          "System.Reflection": "4.0.0",
+          "System.Runtime": "4.0.0",
+          "System.Threading": "4.0.0",
+          "System.Threading.Tasks": "4.0.0"
+        },
+        "compile": {
+          "lib/dotnet/Polly.dll": {}
+        },
+        "runtime": {
+          "lib/dotnet/Polly.dll": {}
+        }
+      },
       "runtime.native.System/4.0.0": {
         "type": "package",
         "dependencies": {
@@ -2715,6 +2733,30 @@
         "lib/portable-net45+wp80+win8+wpa81/Newtonsoft.Json.dll",
         "lib/portable-net45+wp80+win8+wpa81/Newtonsoft.Json.xml",
         "tools/install.ps1"
+      ]
+    },
+    "Polly/4.3.0": {
+      "sha512": "N0rtx8D4WOHTCL85tdXhdjRxj6mlUPFeNcp3ev1h6L4VGIhIY3usjEPhQ4rwkwHgoNjoVNpNhB76o4KV1crJaQ==",
+      "type": "package",
+      "path": "Polly/4.3.0",
+      "files": [
+        "Polly.4.3.0.nupkg.sha512",
+        "Polly.nuspec",
+        "lib/dotnet/Polly.XML",
+        "lib/dotnet/Polly.dll",
+        "lib/dotnet/Polly.pdb",
+        "lib/net35/Polly.XML",
+        "lib/net35/Polly.dll",
+        "lib/net35/Polly.pdb",
+        "lib/net40/Polly.XML",
+        "lib/net40/Polly.dll",
+        "lib/net40/Polly.pdb",
+        "lib/net45/Polly.XML",
+        "lib/net45/Polly.dll",
+        "lib/net45/Polly.pdb",
+        "lib/portable-net45+netcore45+wpa81+wp8/Polly.XML",
+        "lib/portable-net45+netcore45+wpa81+wp8/Polly.dll",
+        "lib/portable-net45+netcore45+wpa81+wp8/Polly.pdb"
       ]
     },
     "runtime.native.System/4.0.0": {
@@ -5524,6 +5566,7 @@
       "Microsoft.Extensions.Configuration.Json >= 1.0.0",
       "Microsoft.NETCore.App >= 1.0.1",
       "Newtonsoft.Json >= 9.0.1",
+      "Polly >= 4.3.0",
       "StackExchange.Redis >= 1.1.608"
     ],
     ".NETCoreApp,Version=v1.0": []
