@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Globalization;
 using System.IO;
 using Polly;
+using System.Text;
 
 namespace text_worker
 {
@@ -42,7 +43,7 @@ namespace text_worker
             {
                 var redis = OpenRedisConnection(configuration["RedisHost"]).GetDatabase();
 
-                var definition = new { name = "", size = 0, user = "", client = "", content = "" };
+                var definition = new { name = "", size = 0, user = "", client = "", content = "", id = "" };
                 Console.WriteLine($"Starting to read from Queue: {queue}");
                 while (true)
                 {
@@ -58,6 +59,7 @@ namespace text_worker
                             Console.WriteLine($"Processing document '{document.name}' uploaded by '{document.user}/{document.client}'");
                             var result = ExtractText(document.name, document.content, configuration["OcrServiceHost"]).Result;
                             Console.WriteLine($"Result from ocr: {result}");
+                            AddExtractedTextToDocument(document.id, result, configuration["DocStoreHost"]);
                         }
                         else
                         {
@@ -73,6 +75,22 @@ namespace text_worker
             }
         }
 
+        private static async void AddExtractedTextToDocument(string id, string extractedText, string docStoreHost)
+        {
+
+            var patch = new[] { new { value = extractedText, path = "/extractedText", op = "add", from = "string" } };
+
+            var content = new StringContent(JsonConvert.SerializeObject(patch), Encoding.UTF8, "application/json");
+            using (var client = new HttpClient())
+            {
+                using (var message = await client.PatchAsync($"http://{docStoreHost}/api/Document/{id}", content))
+                {
+                    var input = await message.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Document patched -> {input}");
+                }
+            }
+
+        }
         private static async Task<string> ExtractText(string name, string content, string ocrServiceHost)
         {
             //make call to ocr_service
@@ -126,5 +144,31 @@ namespace text_worker
                 .First(a => a.AddressFamily == AddressFamily.InterNetwork)
                 .ToString();
 
+
+
+    }
+
+    public static class HttpClientExtensions
+    {
+        public static async Task<HttpResponseMessage> PatchAsync(this HttpClient client, string requestUri, HttpContent iContent)
+        {
+            var method = new HttpMethod("PATCH");
+            var request = new HttpRequestMessage(method, requestUri)
+            {
+                Content = iContent
+            };
+
+            HttpResponseMessage response = new HttpResponseMessage();
+            try
+            {
+                response = await client.SendAsync(request);
+            }
+            catch (TaskCanceledException e)
+            {
+                Console.WriteLine("ERROR: " + e.ToString());
+            }
+
+            return response;
+        }
     }
 }
