@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 set -e
 dotnet restore
 # dotnet test test/folder/project.json

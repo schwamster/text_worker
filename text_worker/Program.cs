@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using System.Globalization;
 using System.IO;
+using Polly;
 
 namespace text_worker
 {
@@ -18,6 +19,17 @@ namespace text_worker
     {
         public static int Main(string[] args)
         {
+
+            var mainThreadMayNeverDiePolicy = Policy
+              .Handle<Exception>()
+              .WaitAndRetryForever(
+                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                (exception, timespan, context) =>
+                {
+                    Console.WriteLine($"Error while processing a item in the queue. Resuming => {exception}");
+                });
+
+
             ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
             configurationBuilder
                 .AddJsonFile("appsettings.json", false)
@@ -34,23 +46,29 @@ namespace text_worker
                 Console.WriteLine($"Starting to read from Queue: {queue}");
                 while (true)
                 {
-                    string json = redis.ListLeftPopAsync(queue).Result;
-                    if (json != null)
+                    //TODO: messages will be lost here, if action fails. Better put it in a "processing" queue or something...
+                    //e.g. http://big-elephants.com/2013-09/building-a-message-queue-using-redis-in-go/
+                    //or consider changing to a completly different technology (rabbitmq...)
+                    mainThreadMayNeverDiePolicy.Execute(() =>
                     {
-                        var document = JsonConvert.DeserializeAnonymousType(json, definition);
-                        Console.WriteLine($"Processing document '{document.name}' uploaded by '{document.user}/{document.client}'");
-                        var result = ExtractText(document.name, document.content, configuration["OcrServiceHost"]).Result;
-                        Console.WriteLine($"Result from ocr: {result}");
-                    }
-                    else
-                    {
-                        Thread.Sleep(500);
-                    }
+                        string json = redis.ListLeftPopAsync(queue).Result;
+                        if (json != null)
+                        {
+                            var document = JsonConvert.DeserializeAnonymousType(json, definition);
+                            Console.WriteLine($"Processing document '{document.name}' uploaded by '{document.user}/{document.client}'");
+                            var result = ExtractText(document.name, document.content, configuration["OcrServiceHost"]).Result;
+                            Console.WriteLine($"Result from ocr: {result}");
+                        }
+                        else
+                        {
+                            Thread.Sleep(500);
+                        }
+                    });
                 }
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.ToString());
+                Console.Error.WriteLine($"Fatal => text-worker crashed => {ex.ToString()}");
                 return 1;
             }
         }
@@ -65,6 +83,8 @@ namespace text_worker
                 {
                     msg.Add(new StreamContent(new MemoryStream(document)), "files", name);
                     var url = $"http://{ocrServiceHost}/api/ocr";
+                    Console.WriteLine($"OcrService Endpoint at: {url}");
+
                     using (var message = await client.PostAsync(url, msg))
                     {
                         var input = await message.Content.ReadAsStringAsync();
@@ -80,6 +100,7 @@ namespace text_worker
         private static ConnectionMultiplexer OpenRedisConnection(string hostname)
         {
             // Use IP address to workaround hhttps://github.com/StackExchange/StackExchange.Redis/issues/410
+            Console.WriteLine($"Looking for redis at {hostname}");
             var ipAddress = GetIp(hostname);
             Console.WriteLine($"Found redis at {ipAddress}");
 

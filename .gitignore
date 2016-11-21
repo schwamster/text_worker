@@ -5,3 +5,4 @@
 /text_worker/obj/Debug/netcoreapp1.0
 /text_worker/obj/release/netcoreapp1.0
 /text_worker/*.user
+/text_worker/project.lock.json
