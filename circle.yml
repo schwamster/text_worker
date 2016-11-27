@@ -1,0 +1,22 @@
+machine:  
+  services:
+    - docker
+
+dependencies:
+  override:
+    - echo "$CIRCLE_TAG"
+    - docker info
+    - docker-compose -f docker-compose-build-circle.yml up
+    - docker build -t schwamster/text-worker ./publish/web/
+
+test:
+  override:
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit
+    - mv testresults/out.xml $CIRCLE_TEST_REPORTS/junit
+    
+deployment:
+  hub:
+    branch: master
+    commands:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push schwamster/text-worker   

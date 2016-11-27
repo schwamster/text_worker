@@ -1,8 +1,8 @@
 version: '2'
 services:
   text-worker-build:
-    image: microsoft/dotnet:latest
+    image: microsoft/dotnet:1.1.0-projectjson
     volumes:
       - .:/sln
     working_dir: /sln
-    entrypoint: ["sh", "./build.sh"]
+    entrypoint: ["sh", "./build-container.sh"]
