@@ -7,7 +7,7 @@ dependencies:
     - echo "$CIRCLE_TAG"
     - docker info
     - docker-compose -f docker-compose-build-circle.yml up
-    - docker build -t schwamster/text-worker ./publish/web/
+    - docker build -t schwamster/text-worker ./publish/worker/
 
 test:
   override:
