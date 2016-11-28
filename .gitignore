@@ -5,3 +5,7 @@
 /text_worker/obj/Debug/netcoreapp1.0
 /text_worker/obj/release/netcoreapp1.0
 /text_worker/*.user
+/test/text_worker.test/obj
+/test/text_worker.test/bin
+/src/text_worker/bin
+/src/text_worker/obj
